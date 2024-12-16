@@ -1,6 +1,3 @@
-
-# VectorPSFs
-=======
 # VectorPSFs
 
 [![Build Status](https://github.com/IvanKuznetsoff/VectorPSFs.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/IvanKuznetsoff/VectorPSFs.jl/actions/workflows/CI.yml?query=branch%3Amain)
