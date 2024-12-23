@@ -1,10 +1,9 @@
 # psf_core.jl
 
-import ..phase_functions: Φ
-
 # -------------------------------------------------------------------
 # Aberration-free phase function
 # -------------------------------------------------------------------
+
 function Ξ(ρ, ϕ, ψ, u, v, s, n)
     @fastmath Ξv = v * ρ * cos(ϕ - ψ) + u * sqrt(1 - s^2 * ρ^2 / n^2)
 end
@@ -160,7 +159,7 @@ end
 # High-level PSF(...) methods
 # -------------------------------------------------------------------
 # If no objective is provided, keep the old logic (air, n=1).
-function PSF(x, y, z, λ, NA, plate::Nothing; target=plate, rtol=1e-3, atol=1e-4)
+function PSF(x, y, z, λ, NA; rtol=1e-3, atol=1e-4)
     n = 1.0
     s = NA
     k = 2π / λ
@@ -170,21 +169,37 @@ function PSF(x, y, z, λ, NA, plate::Nothing; target=plate, rtol=1e-3, atol=1e-4
     return psf_inner(ψ, u, v, s, n; rtol=rtol, atol=atol)
 end
 
-# Objective with no plate -> incorporate immersion n_obj
-function PSF(x, y, z, λ, obj::Objective, plate::Nothing; rtol=1e-3, atol=1e-4)
-    n_obj = obj.n        # immersion liquid refractive index
-    s     = obj.NA
-    k     = 2π * n_obj / λ  # (1) use n_obj
-    # Since there's no plate, we still consider sample in air: n=1
-    # The s^2/(n^2) factor becomes s^2 / 1^2
+# -------------------------------------------------------------------
+# Normal incidence + Objective (no plate => aberration free w/ immersion)
+# -------------------------------------------------------------------
+function PSF(x, y, z, λ, obj::Objective;
+    rtol::Float64=1e-3, atol::Float64=1e-4)
+    # If there's no plate, we might rely on simpler code that doesn't 
+    # set n_a, t, etc. E.g.:
+
+    n_imm = obj.n
+    s     = obj.NA / obj.n
+    k     = 2π * n_imm / λ
+
+    # For "normal incidence" on the sample side (no plate),
+    # let n = 1 (air or sample index if needed).
+    # The defocus factor:
     u = k * (1 - sqrt(1 - s^2)) / (1 - sqrt(1 - s^2)) * z
+    #  ^ note that  s^2 / n^2 = s^2 / 1^2 = s^2
+
     v = k * s * sqrt(x^2 + y^2)
     ψ = atan(x, y)
+
+    # Then call the "aberration-free" psf_inner(...) 
+    # from your psf_core logic:
     return psf_inner(ψ, u, v, s, 1.0; rtol=rtol, atol=atol)
 end
 
-# Plane-parallel plate, but no explicit Objective struct
-function PSF(x, y, z, λ, NA, plate::PlaneParallelPlate; target::PlaneParallelPlate=plate, rtol=1e-3, atol=1e-4)
+# -------------------------------------------------------------------
+# Normal incidence. Keep the old logic (air, n=1).
+# -------------------------------------------------------------------
+
+function PSF(x, y, z, λ, NA::Float64, plate::PlaneParallelPlate; target::PlaneParallelPlate=plate, rtol=1e-3, atol=1e-4)
     n   = target.n_λ(λ)
     n_a = plate.n_λ(λ)  # remains unscaled if no objective
     t   = plate.t
@@ -196,13 +211,16 @@ function PSF(x, y, z, λ, NA, plate::PlaneParallelPlate; target::PlaneParallelPl
     return psf_inner(ψ, u, v, k, s, n, n_a, t; rtol=rtol, atol=atol)
 end
 
-# Objective with plane-parallel plate
+# -------------------------------------------------------------------
+# Normal incidence + Objective
+# -------------------------------------------------------------------
+
 function PSF(x, y, z, λ, obj::Objective, plate::PlaneParallelPlate; target::PlaneParallelPlate=plate, rtol=1e-3, atol=1e-4)
-    n_obj = obj.n
-    s     = obj.NA
-    k     = 2π * n_obj / λ       # n factor in immersion
+    n_imm = obj.n
+    s     = obj.NA / obj.n
+    k     = 2π * n_imm / λ       # n factor in immersion
     n     = target.n_λ(λ)        # plate’s n(λ), typically
-    n_a   = plate.n_λ(λ) / n_obj # n divided by n_obj for Φ
+    n_a   = plate.n_λ(λ) / n_imm # n divided by n_imm for Φ
     t     = plate.t
     # Same integration logic
     u = k * (1 - sqrt(1 - s^2)) / (1 - sqrt(1 - s^2 / n^2)) * z
@@ -211,8 +229,11 @@ function PSF(x, y, z, λ, obj::Objective, plate::PlaneParallelPlate; target::Pla
     return psf_inner(ψ, u, v, k, s, n, n_a, t; rtol=rtol, atol=atol)
 end
 
-# Tilted incidence: no explicit Objective
-function PSF(x, y, z, λ, NA, α, plate::PlaneParallelPlate; target::PlaneParallelPlate=plate, rtol=1e-3, atol=1e-4)
+# -------------------------------------------------------------------
+# Tilted incidence. Keep the old logic (air, n=1).
+# -------------------------------------------------------------------
+
+function PSF(x, y, z, λ, NA::Float64, α, plate::PlaneParallelPlate; target::PlaneParallelPlate=plate, rtol=1e-3, atol=1e-4)
     n   = target.n_λ(λ)
     n_a = plate.n_λ(λ)
     t   = plate.t
@@ -224,13 +245,16 @@ function PSF(x, y, z, λ, NA, α, plate::PlaneParallelPlate; target::PlaneParall
     return psf_inner(ψ, u, v, k, s, α, n, n_a, t; rtol=rtol, atol=atol)
 end
 
+# -------------------------------------------------------------------
 # Tilted incidence + Objective
+# -------------------------------------------------------------------
+
 function PSF(x, y, z, λ, obj::Objective, α, plate::PlaneParallelPlate; target::PlaneParallelPlate=plate, rtol=1e-3, atol=1e-4)
-    n_obj = obj.n
-    s     = obj.NA
-    k     = 2π * n_obj / λ
+    n_imm = obj.n
+    s     = obj.NA / obj.n
+    k     = 2π * n_imm / λ
     n     = target.n_λ(λ)
-    n_a   = plate.n_λ(λ) / n_obj  # (2) 
+    n_a   = plate.n_λ(λ) / n_imm  # (2) 
     t     = plate.t
     u = k * (1 - sqrt(1 - s^2)) / (1 - sqrt(1 - s^2 / n^2)) * z
     v = k * s * sqrt(x^2 + y^2)

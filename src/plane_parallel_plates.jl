@@ -1,25 +1,20 @@
 # plane_parallel_plates.jl
 
-"""
-PlaneParallelPlate stores a plate thickness `t` (in nanometers)
-and a function `n_λ` giving the refractive index at wavelength λ (in micrometers).
-"""
+# PlaneParallelPlate stores a plate thickness `t` (in nanometers)
+# and a function `n_λ` giving the refractive index at wavelength λ (in micrometers).
 struct PlaneParallelPlate
     t::Float64        # Thickness in nanometers
     n_λ::Function     # Refractive Index Curve, n(λ in µm)
 end
 
-
 # ------------------------------------------------------------
 # Diamond
 # ------------------------------------------------------------
-"""
-Diamond(t)
+# Diamond(t)
 
-Approximate dispersion for diamond.
-`λ` is assumed in micrometers (µm).
-Internally converts µm → nm by multiplying by 1e3.
-"""
+# Approximate dispersion for diamond.
+# `λ` is assumed in micrometers (µm).
+# Internally converts µm → nm by multiplying by 1e3.
 function Diamond(t)
     n_λ(λ) = sqrt(1 + (4.658 * (λ * 1e3)^2) /
                          ((λ * 1e3)^2 - 112.5^2))
@@ -30,16 +25,13 @@ end
 # ------------------------------------------------------------
 # Sellmeier Utility
 # ------------------------------------------------------------
-"""
-sellmeier(λ, B, C)
+# Generic Sellmeier equation:
+#     n^2 = 1 + ∑[ Bᵢ * λ² / (λ² - Cᵢ) ]
+# where `λ` is the wavelength in micrometers (µm),
+# and `B`/`C` are vectors of Sellmeier coefficients.
 
-Generic Sellmeier equation:
-    n^2 = 1 + ∑[ Bᵢ * λ² / (λ² - Cᵢ) ]
-where `λ` is the wavelength in micrometers (µm),
-and `B`/`C` are vectors of Sellmeier coefficients.
-"""
 function sellmeier(λ, B::Vector{Float64}, C::Vector{Float64})
-    @assert length(B) == length(C) "B and C must have the same length."
+    @assert length(B) == length(C) # B and C must have the same length.
     λ2 = λ^2
     val = 0.0
     @inbounds @simd for i in eachindex(B)
@@ -107,6 +99,7 @@ end
 # Custom Plate
 # ------------------------------------------------------------
 function CustomPlate(t::Float64, B::Vector{Float64}, C::Vector{Float64}) 
+    @assert length(B) == length(C) # B and C must have the same length.
     n_λ(λ) = sellmeier(λ, B, C) 
     return PlaneParallelPlate(t, n_λ) 
 end
