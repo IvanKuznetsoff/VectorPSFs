@@ -15,7 +15,7 @@ include("objectives.jl")
 include("plane_parallel_plates.jl")
 include("aberration_functions.jl")
 include("psf_core.jl")
-include("nvcenter.jl")
+# include("nvcenter.jl")
 include("strehl.jl")
 
 # From `objectives.jl`
@@ -27,14 +27,17 @@ export PlaneParallelPlate
 export Diamond, FusedSilica, BorosilicateCrown, Sapphire, MagnesiumFluoride
 export CustomPlate  # for user-defined Sellmeier plates
 
-# From `nvcenter.jl`
-export NVCenter  # optionally export default_nvcenter if you want
+# # From `nvcenter.jl`
+# export NVCenter  # optionally export default_nvcenter if you want
+
+# From NVspectrum.jl
+export nv_spectrum_spline
 
 # From `psf_core.jl`
-export PSF
+export PSF, PSFParams
 
 # From `strehl.jl`
-export Strehl, maxtol_thick
+export strehl, maxtol_thick
 
 
 end # module VectorPsfs

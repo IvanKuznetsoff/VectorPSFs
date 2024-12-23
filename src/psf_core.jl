@@ -170,7 +170,7 @@ function PSF(x, y, z, λ, NA; rtol=1e-3, atol=1e-4)
 end
 
 # -------------------------------------------------------------------
-# Normal incidence + Objective (no plate => aberration free w/ immersion)
+# Aberration Free + Objective (no plate => aberration free w/ immersion)
 # -------------------------------------------------------------------
 function PSF(x, y, z, λ, obj::Objective;
     rtol::Float64=1e-3, atol::Float64=1e-4)
@@ -233,7 +233,7 @@ end
 # Tilted incidence. Keep the old logic (air, n=1).
 # -------------------------------------------------------------------
 
-function PSF(x, y, z, λ, NA::Float64, α, plate::PlaneParallelPlate; target::PlaneParallelPlate=plate, rtol=1e-3, atol=1e-4)
+function PSF(x, y, z, λ, NA::Float64, plate::PlaneParallelPlate, α; target::PlaneParallelPlate=plate, rtol=1e-3, atol=1e-4)
     n   = target.n_λ(λ)
     n_a = plate.n_λ(λ)
     t   = plate.t
@@ -249,7 +249,7 @@ end
 # Tilted incidence + Objective
 # -------------------------------------------------------------------
 
-function PSF(x, y, z, λ, obj::Objective, α, plate::PlaneParallelPlate; target::PlaneParallelPlate=plate, rtol=1e-3, atol=1e-4)
+function PSF(x, y, z, λ, obj::Objective, plate::PlaneParallelPlate, α; target::PlaneParallelPlate=plate, rtol=1e-3, atol=1e-4)
     n_imm = obj.n
     s     = obj.NA / obj.n
     k     = 2π * n_imm / λ
@@ -260,4 +260,62 @@ function PSF(x, y, z, λ, obj::Objective, α, plate::PlaneParallelPlate; target:
     v = k * s * sqrt(x^2 + y^2)
     ψ = atan(x, y)
     return psf_inner(ψ, u, v, k, s, α, n, n_a, t; rtol=rtol, atol=atol)
+end
+
+
+abstract type PSFMode end
+
+struct NoAberration <: PSFMode end
+struct NormalIncidence <: PSFMode end
+struct TiltedIncidence <: PSFMode end
+
+
+mutable struct PSFParams{M<:PSFMode}
+    λ::Float64                    # wavelength in µm
+    obj::Objective               # objective lens
+    plate::Union{PlaneParallelPlate,Nothing}  # nothing if no plate
+    α::Float64                   # tilt angle (radians), 0.0 if no tilt
+end
+
+# -------------------------------------------------------------------
+# Aberration Free + Objective (no plate => aberration free w/ immersion)
+# -------------------------------------------------------------------
+
+function PSFParams(λ::Float64, obj::Objective)
+    return PSFParams{NoAberration}(λ, obj, nothing, 0.0)
+end
+
+function PSF(x, y, z, 
+    param::PSFParams{NoAberration};
+    rtol::Float64=1e-3, atol::Float64=1e-4)
+
+    return PSF(x, y, z, param.λ, param.obj; rtol=rtol, atol=atol)
+end
+
+# -------------------------------------------------------------------
+# Normal incidence, with plane-parallel plate
+# -------------------------------------------------------------------
+function PSFParams(λ::Float64, obj::Objective, plate::PlaneParallelPlate)
+    return PSFParams{NormalIncidence}(λ, obj, plate, 0.0)
+end
+
+function PSF(x, y, z, 
+    param::PSFParams{NormalIncidence};
+    rtol::Float64=1e-3, atol::Float64=1e-4)
+
+    return PSF(x, y, z, param.λ, param.obj, param.plate; rtol=rtol, atol=atol)
+end
+
+# -------------------------------------------------------------------
+# Tilted incidence, with plane-parallel plate
+# -------------------------------------------------------------------
+function PSFParams(λ::Float64, obj::Objective, plate::PlaneParallelPlate, α::Float64)
+    return PSFParams{TiltedIncidence}(λ, obj, plate, α)
+end
+
+function PSF(x, y, z, 
+    param::PSFParams{TiltedIncidence};
+    rtol::Float64=1e-3, atol::Float64=1e-4)
+
+    return PSF(x, y, z, param.λ, param.obj, param.plate, param.α; rtol=rtol, atol=atol)
 end

@@ -1,9 +1,9 @@
 # plane_parallel_plates.jl
 
-# PlaneParallelPlate stores a plate thickness `t` (in nanometers)
+# PlaneParallelPlate stores a plate thickness `t` (in micrometers)
 # and a function `n_λ` giving the refractive index at wavelength λ (in micrometers).
 struct PlaneParallelPlate
-    t::Float64        # Thickness in nanometers
+    t::Float64        # Thickness in micrometers
     n_λ::Function     # Refractive Index Curve, n(λ in µm)
 end
 
