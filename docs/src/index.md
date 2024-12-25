@@ -1,313 +1,167 @@
-# Home
+# Overview
 
-## ToC
+**VectorPSFs.jl** provides a comprehensive toolkit for **computing fully vectorial point spread functions (PSFs)** under various conditions, including the presence or absence of **aberrations** induced by plane-parallel plates. The package features specialized optimizations for modeling the PSFs of **NV centers** and supports **quantitative aberration analysis** by computing Strehl ratios and identifying plate thicknesses that preserve near-diffraction-limited performance ($\mathrm{Strehl} > 0.8$).
 
-```@contents
-Pages = [
-    "installation.md"
-    "example.md"
-]
-Depth = 1
+## Features
+
+- **PSF Computations**:  
+  The `PSF(...)` function handles scenarios involving normal or tilted incidence, immersion objectives, and spectral weighting. Users can specify `(x, y, z)` coordinates in micrometers, a chosen objective, and optionally a plane-parallel plate with a tilt angle.
+
+- **Aberrations**:  
+  Refractive-index mismatched transparent materials situated in the path of converging rays introduce **aberrations**. This package enables the computation of aberrated PSFs using a fully vectorial approach.
+
+- **Plane-Parallel Plate Materials**:  
+  Create `PlaneParallelPlate` objects for various materials, including diamond, fused silica, BK7 (borosilicate crown), magnesium fluoride, sapphire, or custom transparent plates whose refractive indices are given by Sellmeier equation.
+
+- **Aberration Quantification**:  
+  Compute **Strehl ratios** across defocus ranges or tilt scenarios, and automate the search for plate thicknesses that ensure near-diffraction-limited performance (\(\mathrm{Strehl} \geq 0.8\)).
+
+- **Microscope Objective Conditioning**:  
+  Define `Objective` structures to capture parameters such as focal length, numerical aperture, refractive index, and immersion medium (e.g., air, oil).
+
+- **NV-Center Integration**:  
+  Includes a specialized workflow for NV photoluminescence, utilizing spline-interpolated spectral data to compute polychromatic PSFs at different wavelengths.
+
+## Basic Steps
+
+1. **Define Microscope Objectives**:  
+   Create `Objective` objects by specifying numerical aperture, immersion medium, and focal length.
+
+2. **Construct Plane-Parallel Plates**:  
+   Build `PlaneParallelPlate` instances (e.g., diamond, fused silica, BK7) using either built-in materials or custom Sellmeier models.
+
+3. **Compute PSFs**:  
+   Use `PSF(...)` to compute PSFs by specifying `(x, y, z)` in micrometers along with the relevant optical parameters (e.g., objective, plate). For compile-time dispatch, utilize the `PSFParams` parametric struct.
+
+For installation and setup instructions, see [Installation](#Installation). To explore practical code examples, refer to [Examples](#Examples).
+
+---
+
+
+# Installation
+
+To install **VectorPSFs.jl**, open the Julia package manager (Pkg REPL mode) and run:
+
+```julia
+] add https://github.com/IvanLuznetsoff/VectorPSFs.jl
 ```
 
----
+The package requires:
+- **HCubature.jl** for multi-dimensional integration,
+- **StaticArrays.jl** for efficient small-array handling,
+- **SmoothingSplines.jl** for NV-spectrum fitting,
+- **Optim.jl** for Strehl ratio optimizations,
+- plus standard libraries like **LinearAlgebra**, **Statistics**, etc.
 
-## Overview
-
-`VectorPSFs.jl` provides tools for computing **vectorial point spread functions (PSFs)**, with or without aberrations, caused by ray transmission through a plane-parallel plate. 
-It is particularly optimized for calculating the PSFs of **NV centers**.
-The package also enables the quantification of aberration effects by **computing Strehl ratios** and determining plate thicknesses that achieve the diffraction limit (Strehl ratio > 0.8). 
-
-For PSF conditionings, follow these steps:
-1. **Define microscope objectives** using `Objective` objects, specifying parameters such as numerical aperture, immersion medium, and focal length.
-2. **Construct plane-parallel plates** (e.g., diamond) using Sellmeier dispersion models.
-
-
----
-
-## Submodules and Key Components
-
-### 1. Objectives
-
-The file `objectives.jl` defines a simple `Objective` struct that encapsulates:
-
-- `f`: focal length (e.g. 2000 μm),
-- `NA`: numerical aperture (dimensionless),
-- `n`: refractive index in the immersion medium (e.g. 1.0 for air, 1.515 for oil, etc.).
-
-Some standard objectives are provided as convenience constructors:
-
-- `MPlanApo100x()`
-- `LMPLFLN100XBD()`
-- `MPlanApo50x()`
-- `M10x()`
-- `UPLXAPO100X()`
-
-**Example Usage**:
+Once installed, you can `using VectorPSFs` in your Julia session:
 ```julia
 using VectorPSFs
-
-obj = MPlanApo100x()  # f=2000, NA=0.7, n=1.0
 ```
 
-### 2. Plane-Parallel Plates
+Check your environment’s compatibility with **Julia ≥ 1.6** (recommended 1.10 or above).
 
-The file `plane_parallel_plates.jl` provides:
+---
 
-- A `PlaneParallelPlate` struct:  
-  - `t` (thickness in micrometers, μm)
-  - `n_λ` (a function giving refractive index vs. wavelength λ in micrometers)
+# Examples
 
-Predefined materials using Sellmeier equations include:
+## PSF Calculation
 
-- `Diamond(t)`, `FusedSilica(t)`, `BorosilicateCrown(t)`, `Sapphire(t)`, `MagnesiumFluoride(t)`, and a `CustomPlate(t, B, C)` for user-supplied Sellmeier coefficients.
+The function `PSF(x, y, z, ...)` computes the on-axis or off-axis field intensity, integrating vectorially over the back pupil.  
+You can choose among multiple overloads:
 
-**Example Usage**:
-```julia
-plate_diamond = Diamond(100.0)  # 100 μm-thick diamond plate
-plate_bk7     = BorosilicateCrown(250.0)  # BK7 plate, 250 μm thick
-```
-
-### 3. PSF Computations
-
-#### 3.1 High-level `PSF` functions
-
-`PSF(x, y, z, ...)` is defined in multiple overloads:
-
-- **No plate, no objective** (simple, air):
+- **No plate, direct calculation** (simple, air):
   ```julia
   PSF(x, y, z, λ, NA; rtol=1e-3, atol=1e-4)
   ```
-- **No plate, with objective** (aberration-free, immersion):
+- **No plate, with `Objective`**:
   ```julia
   PSF(x, y, z, λ, obj::Objective; rtol=1e-3, atol=1e-4)
   ```
-- **Normal-incidence plate, no objective**:
-  ```julia
-  PSF(x, y, z, λ, NA, plate::PlaneParallelPlate; ...)
-  ```
-- **Normal-incidence plate, with objective**:
+- **Normal-incidence plate, with `Objective`**:
   ```julia
   PSF(x, y, z, λ, obj::Objective, plate::PlaneParallelPlate; ...)
   ```
-- **Tilted-incidence plate, no objective**:
-  ```julia
-  PSF(x, y, z, λ, NA, plate::PlaneParallelPlate, α; ...)
-  ```
-- **Tilted-incidence plate, with objective**:
+- **Tilted-incidence plate, with `Objective`**:
   ```julia
   PSF(x, y, z, λ, obj::Objective, plate::PlaneParallelPlate, α; ...)
   ```
 
-`(x, y, z)` are spatial coordinates (in μm), `λ` is wavelength in micrometers, `NA` is the numerical aperture, `α` is the tilt angle in radians.
+Here, `(x, y, z)` are in micrometers (µm).  
+`λ` is the wavelength in µm, `NA` is numerical aperture, `α` is tilt angle in radians.
 
-The various `rtol`/`atol` arguments control the tolerance in the numerical integration (via `HCubature`).
-
-**Example** (Normal incidence, plate, objective):
+**Example** (normal incidence, no aberration):
 ```julia
 using VectorPSFs
 
-obj = MPlanApo50x()           # e.g. 50x objective
-plate = Diamond(50.0)         # 50 μm diamond
-λ = 0.632                     # 632 nm = 0.632 μm
-psf_val = PSF(0.0, 0.0, 0.0, λ, obj, plate)  
-println("PSF on-axis intensity: ", psf_val)
+obj = MPlanApo50x()         # e.g. 50x objective
+λ   = 0.632                 # 632 nm = 0.632 µm
 ```
 
-#### 3.2 `PSFParams` Structures
-
-`PSFParams` wraps the relevant parameters (wavelength, objective, plate, tilt) along with a type marker `PSFMode` indicating whether it is `NoAberration`, `NormalIncidence`, or `TiltedIncidence`. 
-
-You can construct it like so:
-- **No plate**:
-  ```julia
-  param = PSFParams(0.632, MPlanApo100x())
-  I = PSF(x, y, z, param)
-  ```
-- **Normal incidence**:
-  ```julia
-  param = PSFParams(0.532, MPlanApo50x(), Diamond(100.0))
-  I = PSF(0.0, 0.0, 1.0, param)
-  ```
-- **Tilted incidence**:
-  ```julia
-  param = PSFParams(0.532, MPlanApo50x(), Diamond(100.0), α=0.1)
-  I = PSF(0.0, 0.0, 1.0, param)
-  ```
-
-### 4. NV-Center Emission Spectrum
-
-In `NVspectrum.jl`, the module defines arrays of `wavelength` and corresponding raw `spectrum` data, then creates a smoothing spline (`nv_spectrum_spline`).
-
-An `NVCenter` struct stores:
+To obtain a PSF map on a plane:
 ```julia
-struct NVCenter
-    λs::Vector{Float64}   
-    weight::Vector{Float64}
-end
+xs = range(-1,1,201)
+ys = range(-1,1,201)
+psf_map_xy = PSF.(x, y', 0.0, λ, obj)
 ```
-and you can construct it in multiple ways. A typical usage is:
+
+## Strehl Ratio
+
+The **Strehl ratio** is a measure of aberration severity, defined by the ratio of maximum intensity of the aberrated PSF to that of an unaberrated (diffraction-limited) PSF.  
+**Functions**:
 ```julia
-using VectorPSFs
-
-nv_default = NVCenter(NVspectrum.wavelength)  # uses the default spline
+Strehl(t::Float64, λ::Float64, obj::Objective; ...)
+Strehl(t::Float64, λ::Float64, α::Float64, obj::Objective; ...)
 ```
-Then, you can compute the polychromatic PSF from an NV emitter using:
-```julia
-PSF(x, y, z, obj::Objective, nv::NVCenter; rtol, atol)
-PSF(x, y, z, obj::Objective, nv::NVCenter, plate::PlaneParallelPlate; ...)
-PSF(x, y, z, obj::Objective, nv::NVCenter, plate::PlaneParallelPlate, α; ...)
-```
-It integrates over all wavelengths in `nv.λs`, weighting each by `nv.weight`.
-
-**Example** (NV center with objective and diamond plate):
-```julia
-using VectorPSFs
-
-obj       = MPlanApo100x()
-plate     = Diamond(100.0)
-nvcenter  = NVCenter(NVspectrum.wavelength)  # or simply NVCenter(NVspectrum.wavelength)
-x, y, z   = 0.0, 0.0, 0.0
-psf_intensity = PSF(x, y, z, obj, nvcenter, plate)
-println("Weighted PSF from NV-center emission = ", psf_intensity)
-```
-
-### 5. Strehl Ratio Computations
-
-The `strehl.jl` file provides `strehl(...)` methods that:
-
-1. Compute on-axis intensity (x=0, y=0) as a function of defocus `z`.
-2. Find the maximum intensity in a given `zrange`.
-3. Normalize by the unaberrated (or reference) case to get a Strehl ratio.
-
-**Method signatures**:
-
-```julia
-strehl(t::Float64, λ::Float64, obj::Objective;
-       plate::Function=Diamond, zrange=[-2.0, 4.0], rtol=1e-10, atol=1e-10)
-
-strehl(t::Float64, λ::Float64, obj::Objective, plate::Function, α::Float64;
-       zrange=[-2.0, 4.0], ...)
-
-strehl(t::Float64, λ::Float64, obj::Objective, z_est::Float64;
-       plate::Function=Diamond, ...)
-
-strehl(t::Float64, λ::Float64, obj::Objective, z_est::Float64,
-       plate::Function, α::Float64; ...)
-```
-
-Here,
-- `t` is plate thickness,
-- `λ` is wavelength (μm),
-- `obj` is the `Objective`,
-- `α` is tilt angle (optional),
-- `z_est` is a user-chosen defocus for direct evaluation,
-- `zrange` is a bracket around which we do a 1D optimization for the best focus.
-
-**Example**:
-```julia
-using VectorPSFs, Optim
-
-obj = UPLXAPO100X()         # e.g. NA=1.45, n=1.515
-λ   = 0.637                 # 637 nm
-# Find the Strehl ratio for a 50 μm diamond plate:
-S = strehl(50.0, λ, obj, Diamond; zrange=[-5.0, 5.0])
-println("Strehl ratio = ", S)
-```
-
-### 6. Finding Plate Thickness for Desired Strehl
-
-`maxtol_thick(...)` searches for a thickness `t` in a given range such that the Strehl ratio is as close to 0.8 (or any built-in target) as possible.
-
-Two variants exist (normal incidence vs. tilted):
-```julia
-maxtol_thick(λ::Float64, obj::Objective; plate::Function=Diamond, t_range=(0.0, 500.), ...)
-maxtol_thick(λ::Float64, obj::Objective, plate::Function, α::Float64; t_range=(0.0, 500.), ...)
-```
+These calls do an internal defocus optimization.  
+If `S > 0.8`, we often call it “diffraction-limited.”
 
 **Example**:
 ```julia
 using VectorPSFs, Optim
 
 obj = MPlanApo100x()
-λ   = 0.637
-t_star = maxtol_thick(λ, obj, Diamond; t_range=(0.0, 200.0))
-println("Thickness achieving Strehl ≈ 0.8: ", t_star, " μm")
+λ   = 0.7         # 700 nm
+s = Strehl(50.0, λ, obj, Diamond; zrange=[0.0, 5.0])  # Diamond thickness=50 µm
+println("Strehl ratio = ", s)
 ```
 
----
+## NV-Center Weighted PSF
 
-## Example Workflows
-
-Below is a more complete sequence showcasing key steps:
-
+We also offer a polychromatic weighted summation for NV emission:  
 ```julia
-using VectorPSFs, Optim
-
-# 1. Define your objective and plate
-obj    = MPlanApo100x()          # 100x objective, NA=0.7, n=1.0
-plate  = Diamond(50.0)           # 50 μm diamond
-
-# 2. Choose wavelength (in μm)
-λ_red  = 0.637                   # 637 nm
-
-# 3. Compute on-axis PSF with/without plate
-psf_no_plate     = PSF(0.0, 0.0, 0.0, λ_red, obj)           # no plate
-psf_with_plate   = PSF(0.0, 0.0, 0.0, λ_red, obj, plate)    # normal-incidence diamond
-
-println("On-axis, no plate:     ", psf_no_plate)
-println("On-axis, with plate:   ", psf_with_plate)
-
-# 4. Evaluate PSF off-axis
-x, y, z = 0.5, 0.5, 1.0
-val_off_axis = PSF(x, y, z, λ_red, obj, plate)
-println("PSF at (x,y,z) = (0.5, 0.5, 1.0): ", val_off_axis)
-
-# 5. Compute Strehl ratio for t=50 μm diamond
-S_50 = strehl(50.0, λ_red, obj, Diamond; zrange=[-2.0, 2.0])
-println("Strehl ratio at t=50 μm: ", S_50)
-
-# 6. Find thickness that yields ~0.8 Strehl
-t_star = maxtol_thick(λ_red, obj, Diamond; t_range=(0.0, 200.0))
-println("Thickness achieving ~0.8 Strehl: ", t_star)
+PSF(x, y, z, obj::Objective, nv::NVCenter; ...)
 ```
+where `NVCenter` is a struct storing smoothed spectral weights. This integrates over multiple wavelengths.  
 
----
-
-## NV-Center Example
-
-A polychromatic PSF, summing over the NV emission:
-
+**Example**:
 ```julia
 using VectorPSFs
 
-# Create an NVCenter (already has an internal spline from 460 nm to ~810 nm)
-nv = NVCenter(NVspectrum.wavelength)
-
-# Define objective and plate
+nv = NVCenter(NVspectrum.wavelength)  # smoothing-based weighting
 obj = MPlanApo100x()
-diamond_plate = Diamond(100.0)
-
-# Compute polychromatic PSF at on-axis, z=0
-psf_nv = PSF(0.0, 0.0, 0.0, obj, nv, diamond_plate)
-println("NV-center weighted PSF intensity: ", psf_nv)
+plate_diamond = Diamond(100.0)
+val_NV = PSF(0.0, 0.0, 3.0, obj, nv, plate_diamond)
+println("NV-weighted PSF intensity = ", val_NV)
 ```
 
 ---
 
-## Concluding Remarks
+## Additional Topics
 
-`VectorPSFs.jl` merges vectorial diffraction integrals, plate-dispersion modeling, and NV-center polychromatic weighting. The user can explore multiple incidence angles (`α`), different defocus values, and optimize over plate thickness or defocus to understand aberrations. The code is heavily based on numerical integration via `HCubature` and often uses `Optim` (Brent method) for 1D optimization tasks (finding best focus, searching for thickness).
+- **PlaneParallelPlate**: 
+  Constructors like `Diamond(t)`, `FusedSilica(t)`, `BorosilicateCrown(t)`, etc., each define a wavelength-dependent refractive index using Sellmeier equations.
+- **Objective**:
+  Typical usage: `MPlanApo50x()`, `MPlanApo100x()`, etc., or define your own `Objective(f, NA, n)`.
+- **ParametricPSF**:
+  A more advanced method is to use parametric structs (e.g., `PSFParams{Mode}`) for compile-time dispatch of different incidence modes (no plate, normal, tilted).
 
-**Key Exports**:
+For more details, consult the source code in `psf_core.jl`, `plane_parallel_plates.jl`, `objectives.jl`, etc.
 
-- **Objectives**: `MPlanApo100x`, `LMPLFLN100XBD`, `MPlanApo50x`, `M10x`, `UPLXAPO100X`
-- **Plates**: `Diamond`, `FusedSilica`, `BorosilicateCrown`, `Sapphire`, `MagnesiumFluoride`, `CustomPlate`
-- **PSF** function family
-- **Strehl ratio** routines: `strehl(...)`
-- **Thickness finder**: `maxtol_thick(...)`
-- **NV**-center spline: `nv_spectrum_spline`, `NVCenter(...)`
 
-Feel free to adjust tolerances (`rtol`, `atol`) as needed for speed vs. accuracy. If performing repeated calls (e.g., scanning `x, y, z` grids), you may wish to cache results or consider a higher-level approach to manage performance.
+Here’s the proofread version of your citation text:
 
-That covers the main functionality and usage of **VectorPSFs.jl**!
+---
+
+# Citation
+
+This package was developed as part of academic research. If you use it in your research, we would appreciate if you could cite our work ([arXiv:2402.14422](https://arxiv.org/abs/2402.14422)).

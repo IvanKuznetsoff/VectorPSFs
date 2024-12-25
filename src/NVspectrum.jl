@@ -1,4 +1,26 @@
+# NVspectrum.jl
+# Provides NV center emission data (in nanometers), plus a smoothing spline interpolation.
+
+"""
+    module NVspectrum
+
+NV center spectrum. 
+- The `wavelength` array is given in micrometers (µm).
+- The `spectrum` array holds corresponding intensities (arbitrary units).
+- `nv_spectrum_spline` is a smoothing spline fit of `spectrum` vs. `wavelength`.
+
+You can access the raw data via `NVspectrum.wavelength` and `NVspectrum.spectrum`,
+or use `nv_spectrum_spline` for continuous interpolation.
+"""
 module NVspectrum
+
+using SmoothingSplines
+
+"""
+    wavelength
+
+A constant array of NV emission wavelengths (in µm).
+"""
 const wavelength = [460.7, 460.96, 461.22, 461.49, 461.75, 462.02, 462.28, 462.54, 462.81, 463.07, 
 463.34, 463.6, 463.86, 464.13, 464.39, 464.66, 464.92, 465.18, 465.45, 465.71, 
 465.98, 466.24, 466.5, 466.77, 467.03, 467.3, 467.56, 467.82, 468.09, 468.35, 
@@ -135,6 +157,11 @@ const wavelength = [460.7, 460.96, 461.22, 461.49, 461.75, 462.02, 462.28, 462.5
 810.27, 810.53, 810.79, 811.05, 811.31, 811.58, 811.84, 812.1, 812.36, 812.62, 
 ] * 1e-3
 
+"""
+    spectrum
+
+A constant array of raw intensities (arbitrary units) for each entry in `wavelength`.
+"""
 const spectrum = [-206.0, -70.0, -67.0, 40.0, -28.0, 55.0, 29.0, 80.0, -61.0, 35.0, 
 21.0, -62.0, -77.0, -18.0, 54.0, -90.0, -47.0, -26.0, -53.0, -4.0, 
 41.0, 28.0, 15.0, -10.0, -22.0, 47.0, -67.0, 9.0, 13.0, -12.0, 
@@ -270,6 +297,16 @@ const spectrum = [-206.0, -70.0, -67.0, 40.0, -28.0, 55.0, 29.0, 80.0, -61.0, 35
 732.0, 861.0, 764.0, 857.0, 761.0, 720.0, 719.0, 805.0, 678.0, 712.0, 
 595.0, 489.0, 577.0, 532.0, 467.0, 414.0, 381.0, 315.0, 270.0, 297.0, 
 ]
-end
-# A default NVCenter Spectrum Interpolated Curve
+
+"""
+    nv_spectrum_spline
+
+A smoothing spline fit (`SmoothingSplines.SmoothingSpline`) constructed from 
+`wavelength` and `spectrum`, using a smoothing parameter of 250.0.
+This allows continuous interpolation/extrapolation of the NV emission data.
+"""
 const nv_spectrum_spline = SmoothingSplines.fit(SmoothingSplines.SmoothingSpline, NVspectrum.wavelength, NVspectrum.spectrum, 250.)
+
+export nv_spectrum_spline
+
+end# module NVspectrum

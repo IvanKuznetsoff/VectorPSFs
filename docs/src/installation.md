@@ -1,11 +1,23 @@
 # Installation
-In order to install this package, 
-```
-(v1.10) pkg> add https://github.com/IvanKuznetsoff/VectorPSFs.jl
-```
+
+To install **VectorPSFs.jl**, open the Julia package manager (Pkg REPL mode) and run:
 
 ```julia
-using VectorPSFs
+] add https://github.com/IvanLuznetsoff/VectorPSFs.jl
 ```
 
-(Or just clone the whole project in the root directory and type `include("src/VectorPSFs.jl")` in your own project, followed by `using .VectorPSFs`.)
+The package requires:
+- **HCubature.jl** for multi-dimensional integration,
+- **StaticArrays.jl** for efficient small-array handling,
+- **SmoothingSplines.jl** for NV-spectrum fitting,
+- **Optim.jl** for Strehl ratio optimizations,
+- plus standard libraries like **LinearAlgebra**, **Statistics**, etc.
+
+Once installed, you can `using VectorPsfs` in your Julia session:
+```julia
+using VectorPsfs
+```
+
+Check your environment’s compatibility with **Julia ≥ 1.6** (recommended 1.10 or above).
+```
+
