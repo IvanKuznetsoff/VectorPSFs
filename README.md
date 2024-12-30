@@ -5,7 +5,7 @@
 [![Coverage](https://codecov.io/gh/IvanKuznetsoff/VectorPSFs.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/IvanKuznetsoff/VectorPSFs.jl)
 [![Coverage](https://coveralls.io/repos/github/IvanKuznetsoff/VectorPSFs.jl/badge.svg?branch=main)](https://coveralls.io/github/IvanKuznetsoff/VectorPSFs.jl?branch=main)
 
-# Overview
+## Overview
 
 **VectorPSFs.jl** provides a comprehensive toolkit for **computing fully vectorial point spread functions (PSFs)** under various conditions, including the presence or absence of **aberrations** induced by plane-parallel plates. The package features specialized optimizations for modeling the PSFs of **NV centers** and supports **quantitative aberration analysis** by computing Strehl ratios and identifying plate thicknesses that preserve near-diffraction-limited performance ($\mathrm{Strehl} > 0.8$).
 
@@ -29,4 +29,4 @@
 - **NV-Center Integration**:  
   Includes a specialized workflow for NV photoluminescence, utilizing spline-interpolated spectral data to compute polychromatic PSFs at different wavelengths.
 
-For installation and setup instructions, see [Installation](https://ivankuznetsoff.github.io/VectorPSFs.jl/).
+For installation and setup instructions, see [Document](https://ivankuznetsoff.github.io/VectorPSFs.jl/).
