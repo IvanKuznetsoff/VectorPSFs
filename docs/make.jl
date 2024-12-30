@@ -1,4 +1,5 @@
 using Documenter
+using VectorPSFs
 
 makedocs(
     sitename = "VectorPSFs.jl",
