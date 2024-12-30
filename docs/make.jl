@@ -9,3 +9,6 @@ makedocs(
     modules = [VectorPSFs],
     format = Documenter.HTML()
 )
+deploydocs(
+    repo = "github.com/IvanKuznetsoff/VectorPSFs.jl.git",
+)
