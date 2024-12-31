@@ -1,6 +1,6 @@
 # VectorPSFs
 
-[![Dev](https://img.shields.io/badge/docs-stable-blue.svg)](https://ivankuznetsoff.github.io/VectorPSFs.jl/))]
+[![Dev](https://img.shields.io/badge/docs-stable-blue.svg)](https://ivankuznetsoff.github.io/VectorPSFs.jl/)
 [![Build Status](https://github.com/IvanKuznetsoff/VectorPSFs.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/IvanKuznetsoff/VectorPSFs.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/IvanKuznetsoff/VectorPSFs.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/IvanKuznetsoff/VectorPSFs.jl)
 
