@@ -43,7 +43,7 @@ to obtain weights for the given array of wavelengths `λs`.
 Weights are normalized (so their sum is 1).
 """
 function NVCenter(λs::Vector{Float64})
-    w = SmoothingSplines.predict(nv_spectrum_spline, λs)
+    w = SmoothingSplines.predict(NVspectrum.nv_spectrum_spline, λs)
     weight = w ./ sum(w)
     return NVCenter(λs, weight)
 end
@@ -53,7 +53,7 @@ end
 # -------------------------------------------------------------------
 
 """
-    PSF(x, y, z, obj::Objective, nv::NVCenter; rtol=1e-3, atol=1e-4)
+    PSF(x, y, z, obj::Objective, nv::NVCenter; rtol=1e-4, atol=1e-5)
 
 Compute a polychromatic PSF for an NV center (no plate scenario).  
 Integrates over all wavelengths in `nv.λs`, calling the single-wavelength `PSF(...)` for each λ
@@ -64,30 +64,30 @@ and weighting by `nv.weight`.
 - `nv::NVCenter` is the NV spectrum data
 - `rtol, atol` are integration tolerances
 """
-function PSF(x, y, z, obj::Objective, nv::NVCenter; rtol=1e-3, atol=1e-4)
+function PSF(x, y, z, obj::Objective, nv::NVCenter; rtol=1e-4, atol=1e-5)
     # Example: λ in µm
-    res = map(λ -> PSF(x, y, z, λ, obj, nothing; rtol=rtol, atol=atol), nv.λs)
+    res = map(λ -> PSF(x, y, z, λ, obj; rtol=rtol, atol=atol), nv.λs)
     return dot(res, nv.weight)
 end
 
 """
-    PSF(x, y, z, obj::Objective, nv::NVCenter, plate::PlaneParallelPlate; rtol=1e-3, atol=1e-4)
+    PSF(x, y, z, obj::Objective, nv::NVCenter, plate::PlaneParallelPlate; rtol=1e-4, atol=1e-5)
 
 Compute a polychromatic PSF for NV emission with a normal-incidence plate.  
 Broadcasts over `nv.λs`, calling single-wavelength `PSF(...)` for each λ, then weights with `nv.weight`.
 """
-function PSF(x, y, z, obj::Objective, nv::NVCenter, plate::PlaneParallelPlate; rtol=1e-3, atol=1e-4)
+function PSF(x, y, z, obj::Objective, nv::NVCenter, plate::PlaneParallelPlate; rtol=1e-4, atol=1e-5)
     res = map(λ -> PSF(x, y, z, λ, obj, plate; rtol=rtol, atol=atol), nv.λs)
     return dot(res, nv.weight)
 end
 
 """
-    PSF(x, y, z, obj::Objective, nv::NVCenter, plate::PlaneParallelPlate, α::Float64; rtol=1e-3, atol=1e-4)
+    PSF(x, y, z, obj::Objective, nv::NVCenter, plate::PlaneParallelPlate, α::Float64; rtol=1e-4, atol=1e-5)
 
 Compute a polychromatic PSF for NV emission with a tilted-incidence plate.  
 Again, integrates over `nv.λs` and sums with `nv.weight`.
 """
-function PSF(x, y, z, obj::Objective, nv::NVCenter, plate::PlaneParallelPlate, α::Float64; rtol=1e-3, atol=1e-4)
-    res = map(λ -> PSF(x, y, z, λ, obj, α, plate; rtol=rtol, atol=atol), nv.λs)
+function PSF(x, y, z, obj::Objective, nv::NVCenter, plate::PlaneParallelPlate, α::Float64; rtol=1e-4, atol=1e-5)
+    res = map(λ -> PSF(x, y, z, λ, obj, plate, α; rtol=rtol, atol=atol), nv.λs)
     return dot(res, nv.weight)
 end

@@ -67,7 +67,7 @@ function ξz(ρ, ϕ, Ξ, s)
 end
 
 """
-    psf_inner(ψ, u, v, s, n; rtol=1e-3, atol=1e-4)
+    psf_inner(ψ, u, v, s, n; rtol=1e-4, atol=1e-5)
 
 Computes the aberration-free PSF intensity by numerically integrating
 the x-, y-, and z-polarized integrands via `hcubature`.
@@ -77,7 +77,7 @@ the x-, y-, and z-polarized integrands via `hcubature`.
 - `n` is the refractive index (1.0 or immersion).
 - `rtol`, `atol` are integration tolerances.
 """
-function psf_inner(ψ, u, v, s, n; rtol=1e-3, atol=1e-4)
+function psf_inner(ψ, u, v, s, n; rtol=1e-4, atol=1e-5)
     resx = hcubature(
         dr -> ξx(dr[1], dr[2], Ξ(dr[1], dr[2], ψ, u, v, s, n), s),
         [0.0, 0.0], [1.0, 2π],
@@ -147,14 +147,14 @@ function ξz(ρ, ϕ, ψ, u, v, k, s, n, n_a, t)
 end
 
 """
-    psf_inner(ψ, u, v, k, s, n, n_a, t; rtol=1e-3, atol=1e-4)
+    psf_inner(ψ, u, v, k, s, n, n_a, t; rtol=1e-4, atol=1e-5)
 
 Compute the PSF with normal incidence on a plane-parallel plate via `hcubature`.
 - `k` is the wave number (2πn_obj / λ).
 - `t` is plate thickness in µm.
 - `n_a` is the plate’s refractive index (possibly scaled by immersion factor).
 """
-function psf_inner(ψ, u, v, k, s, n, n_a, t; rtol=1e-3, atol=1e-4)
+function psf_inner(ψ, u, v, k, s, n, n_a, t; rtol=1e-4, atol=1e-5)
     resx = hcubature(
         dr -> ξx(dr[1], dr[2], ψ, u, v, k, s, n, n_a, t),
         [0.0, 0.0], [1.0, 2π],
@@ -224,7 +224,7 @@ function ξz(ρ, ϕ, ψ, u, v, k, s, α, n, n_a, t)
 end
 
 """
-    psf_inner(ψ, u, v, k, s, α, n, n_a, t; rtol=1e-3, atol=1e-4)
+    psf_inner(ψ, u, v, k, s, α, n, n_a, t; rtol=1e-4, atol=1e-5)
 
 Compute the PSF with tilted incidence on a plane-parallel plate via `hcubature`.
 - `α` is the tilt angle (radians).
@@ -232,7 +232,7 @@ Compute the PSF with tilted incidence on a plane-parallel plate via `hcubature`.
 - `n_a` is plate index scaled if needed.
 - Other parameters as before.
 """
-function psf_inner(ψ, u, v, k, s, α, n, n_a, t; rtol=1e-3, atol=1e-4)
+function psf_inner(ψ, u, v, k, s, α, n, n_a, t; rtol=1e-4, atol=1e-5)
     resx = hcubature(
         dr -> ξx(dr[1], dr[2], ψ, u, v, k, s, α, n, n_a, t),
         [0.0, 0.0], [1.0, 2π],
@@ -261,7 +261,7 @@ end
 # -------------------------------------------------------------------
 
 """
-    PSF(x, y, z, λ, NA; rtol=1e-3, atol=1e-4)
+    PSF(x, y, z, λ, NA; rtol=1e-4, atol=1e-5)
 
 Aberration-free PSF with no objective structure, using air (n=1).  
 - `λ` in µm
@@ -269,7 +269,7 @@ Aberration-free PSF with no objective structure, using air (n=1).
 - `(x, y, z)` in µm
 - `rtol`, `atol` tolerances
 """
-function PSF(x, y, z, λ, NA; rtol=1e-3, atol=1e-4)
+function PSF(x, y, z, λ, NA; rtol=1e-4, atol=1e-5)
     n = 1.0
     s = NA
     k = 2π / λ
@@ -280,12 +280,12 @@ function PSF(x, y, z, λ, NA; rtol=1e-3, atol=1e-4)
 end
 
 """
-    PSF(x, y, z, λ, obj::Objective; rtol=1e-3, atol=1e-4)
+    PSF(x, y, z, λ, obj::Objective; rtol=1e-4, atol=1e-5)
 
 Aberration-free PSF with an `Objective` specifying immersion index, NA, etc.  
 No plate, normal incidence in air or immersion.
 """
-function PSF(x, y, z, λ, obj::Objective; rtol::Float64=1e-3, atol::Float64=1e-4)
+function PSF(x, y, z, λ, obj::Objective; rtol::Float64=1e-4, atol::Float64=1e-5)
     n_imm = obj.n
     s     = obj.NA 
     k     = 2π * n_imm / λ
@@ -302,7 +302,7 @@ end
 
 Normal incidence with a plane-parallel plate, no explicit `Objective`.
 """
-function PSF(x, y, z, λ, NA::Float64, plate::PlaneParallelPlate; target::PlaneParallelPlate=plate, rtol=1e-3, atol=1e-4)
+function PSF(x, y, z, λ, NA::Float64, plate::PlaneParallelPlate; target::PlaneParallelPlate=plate, rtol=1e-4, atol=1e-5)
     n   = target.n_λ(λ)
     n_a = plate.n_λ(λ)
     t   = plate.t
@@ -319,7 +319,7 @@ end
 
 Normal incidence with a plane-parallel plate and an explicit Objective.
 """
-function PSF(x, y, z, λ, obj::Objective, plate::PlaneParallelPlate; target::PlaneParallelPlate=plate, rtol=1e-3, atol=1e-4)
+function PSF(x, y, z, λ, obj::Objective, plate::PlaneParallelPlate; target::PlaneParallelPlate=plate, rtol=1e-4, atol=1e-5)
     n_imm = obj.n
     s     = obj.NA
     k     = 2π * n_imm / λ
@@ -337,7 +337,7 @@ end
 
 Tilted incidence with no explicit `Objective`.
 """
-function PSF(x, y, z, λ, NA::Float64, plate::PlaneParallelPlate, α; target::PlaneParallelPlate=plate, rtol=1e-3, atol=1e-4)
+function PSF(x, y, z, λ, NA::Float64, plate::PlaneParallelPlate, α; target::PlaneParallelPlate=plate, rtol=1e-4, atol=1e-5)
     n   = target.n_λ(λ)
     n_a = plate.n_λ(λ)
     t   = plate.t
@@ -354,7 +354,7 @@ end
 
 Tilted incidence with plane + objective.
 """
-function PSF(x, y, z, λ, obj::Objective, plate::PlaneParallelPlate, α; target::PlaneParallelPlate=plate, rtol=1e-3, atol=1e-4)
+function PSF(x, y, z, λ, obj::Objective, plate::PlaneParallelPlate, α; target::PlaneParallelPlate=plate, rtol=1e-4, atol=1e-5)
     n_imm = obj.n
     s     = obj.NA
     k     = 2π * n_imm / λ
@@ -427,13 +427,13 @@ function PSFParams(λ::Float64, obj::Objective)
 end
 
 """
-    PSF(x, y, z, param::PSFParams{NoAberration}; rtol=1e-3, atol=1e-4)
+    PSF(x, y, z, param::PSFParams{NoAberration}; rtol=1e-4, atol=1e-5)
 
 Dispatch for the no-aberration case (`NoAberration`). 
 Calls `PSF(x, y, z, λ, obj; rtol, atol)`.
 """
 function PSF(x, y, z, param::PSFParams{NoAberration};
-    rtol::Float64=1e-3, atol::Float64=1e-4)
+    rtol::Float64=1e-4, atol::Float64=1e-5)
     return PSF(x, y, z, param.λ, param.obj; rtol=rtol, atol=atol)
 end
 
@@ -447,13 +447,13 @@ function PSFParams(λ::Float64, obj::Objective, plate::PlaneParallelPlate)
 end
 
 """
-    PSF(x, y, z, param::PSFParams{NormalIncidence}; rtol=1e-3, atol=1e-4)
+    PSF(x, y, z, param::PSFParams{NormalIncidence}; rtol=1e-4, atol=1e-5)
 
 Dispatch for normal incidence with a plate. 
 Calls `PSF(x, y, z, λ, obj, plate; rtol, atol)`.
 """
 function PSF(x, y, z, param::PSFParams{NormalIncidence};
-    rtol::Float64=1e-3, atol::Float64=1e-4)
+    rtol::Float64=1e-4, atol::Float64=1e-5)
     return PSF(x, y, z, param.λ, param.obj, param.plate; rtol=rtol, atol=atol)
 end
 
@@ -468,12 +468,12 @@ function PSFParams(λ::Float64, obj::Objective, plate::PlaneParallelPlate, α::F
 end
 
 """
-    PSF(x, y, z, param::PSFParams{TiltedIncidence}; rtol=1e-3, atol=1e-4)
+    PSF(x, y, z, param::PSFParams{TiltedIncidence}; rtol=1e-4, atol=1e-5)
 
 Dispatch for tilted incidence with a plate.
 Calls `PSF(x, y, z, λ, obj, plate, α; rtol, atol)`.
 """
 function PSF(x, y, z, param::PSFParams{TiltedIncidence};
-    rtol::Float64=1e-3, atol::Float64=1e-4)
+    rtol::Float64=1e-4, atol::Float64=1e-5)
     return PSF(x, y, z, param.λ, param.obj, param.plate, param.α; rtol=rtol, atol=atol)
 end
