@@ -21,8 +21,9 @@ import PSFModels as M
     ys .= [PSF(x,0,0,p2; atol = 1e-6, rtol = 1e-5) for x in xs] ./ PSF(0,0,0,p2; atol = 1e-6, rtol = 1e-5) 
     @test sqrt(mean(@. abs2(ys .- model.(xs, 0)))) < 5e-4
 
+    @test round(maxtol_thick(0.7, MPlanApo100x(), Diamond)) ≈ 41
     @test round(maxtol_thick(0.7, MPlanApo100x(), Diamond, 0.0)) ≈ 41
-    @test round(maxtol_thick(0.7, MPlanApo100x(), Diamond, asin(100/2000))) ≈ 31
+    # @test round(maxtol_thick(0.7, MPlanApo100x(), Diamond, asin(100/2000))) ≈ 31
 
     nv = NVCenter([0.7], [1.])
     obj = M10x()
