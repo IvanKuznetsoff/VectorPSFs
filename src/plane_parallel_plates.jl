@@ -27,7 +27,7 @@ function Diamond(t)
     n_λ(λ) = sqrt(
         1 + (4.658 * (λ * 1e3)^2) / ((λ * 1e3)^2 - 112.5^2)
     )
-    return PlaneParallelPlate(t, n_λ)
+    return PlaneParallelPlate(Float64(t), n_λ)
 end
 
 # ------------------------------------------------------------
@@ -48,7 +48,7 @@ n^2 = 1 + ∑( Bᵢ * λ² / (λ² - Cᵢ) )
 
 Returns the refractive index `n(λ)`.
 """
-function sellmeier(λ, B::Vector{Float64}, C::Vector{Float64})
+function sellmeier(λ, B::AbstractVector{<:Real}, C::AbstractVector{<:Real})
     @assert length(B) == length(C) "B and C must have the same length."
     λ2 = λ^2
     val = 0.0
@@ -166,7 +166,7 @@ n^2 = 1 + ∑( Bᵢ * λ² / (λ² - Cᵢ) )
 (λ in micrometers). 
 `B` and `C` must be the same length.
 """
-function CustomPlate(t::Float64, B::Vector{Float64}, C::Vector{Float64})
+function CustomPlate(t::Float64, B::AbstractVector{<:Real}, C::AbstractVector{<:Real})
     @assert length(B) == length(C) "B and C must have the same length."
     n_λ(λ) = sellmeier(λ, B, C)
     return PlaneParallelPlate(t, n_λ)

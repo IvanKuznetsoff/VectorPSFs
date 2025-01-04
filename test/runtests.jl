@@ -23,7 +23,6 @@ import PSFModels as M
 
     @test round(maxtol_thick(0.7, MPlanApo100x(), Diamond)) ≈ 41
     @test round(maxtol_thick(0.7, MPlanApo100x(), Diamond, 0.0)) ≈ 41
-    # @test round(maxtol_thick(0.7, MPlanApo100x(), Diamond, asin(100/2000))) ≈ 31
 
     nv = NVCenter([0.7])
 
@@ -43,4 +42,7 @@ import PSFModels as M
         ys = [PSF(x, 0, 0, obj, nv, plate, 0.0; atol = 1e-6, rtol = 1e-5) for x in xs] ./ PSF(0, 0, 0, obj, nv, Diamond(0.0), 0.0; atol = 1e-6, rtol = 1e-5) 
         @test sqrt(mean(@. abs2(ys .- model.(xs, 0)))) < 5e-4
     end
+
+    s = strehl(10., 0.7, MPlanApo100x(), 0.0, Diamond)
+    @test s ≈ strehl(10., 0.7, MPlanApo100x(), 0.0, Diamond, 0.0)
 end

@@ -19,11 +19,11 @@ S = strehl(50.0, 0.7, MPlanApo100x())  # diamond thickness=50 µm, λ=0.7 µm
 ```
 """
 function strehl(
-    t::Float64,
-    λ::Float64,
+    t::Real,
+    λ::Real,
     obj::Objective,
     plate::Function=Diamond;
-    zrange::Vector{Float64}=[-2.0, 4.0],
+    zrange::AbstractVector{<:Real}=[-2.0, 4.0],
     rtol::Float64=1e-10,
     atol::Float64=1e-10
 )
@@ -43,7 +43,7 @@ end
 # -------------------------------------------------------------------
 
 """
-    strehl(t, λ, obj::Objective, plate::Function, α::Float64; 
+    strehl(t, λ, obj::Objective, plate::Function, α::Real; 
            zrange=[-2.0, 4.0], rtol=1e-10, atol=1e-10)
 
 Compute the Strehl ratio for a plate of thickness `t` (µm), wavelength `λ` (µm), 
@@ -51,12 +51,12 @@ Objective `obj`, and tilt angle `α` (radians).
 The search for best defocus is done in `zrange` (µm).  
 """
 function strehl(
-    t::Float64,
-    λ::Float64,
+    t::Real,
+    λ::Real,
     obj::Objective,
     plate::Function,
-    α::Float64;
-    zrange::Vector{Float64}=[-2.0, 4.0],
+    α::Real;
+    zrange::AbstractVector{<:Real}=[-2.0, 4.0],
     rtol::Float64=1e-10,
     atol::Float64=1e-10
 )
@@ -72,16 +72,16 @@ end
 # -------------------------------------------------------------------
 
 """
-    strehl(t, λ, obj::Objective, z_est::Float64, plate::Function=Diamond; rtol=1e-10, atol=1e-10)
+    strehl(t, λ, obj::Objective, z_est::Real, plate::Function=Diamond; rtol=1e-10, atol=1e-10)
 
 Compute the on-axis Strehl ratio for a plate thickness `t` (µm) at a specified defocus `z_est` (µm).
 No tilt assumed. 
 """
 function strehl(
-    t::Float64,
-    λ::Float64,
+    t::Real,
+    λ::Real,
     obj::Objective,
-    z_est::Float64,
+    z_est::Real,
     plate::Function=Diamond;
     rtol::Float64=1e-10,
     atol::Float64=1e-10
@@ -92,17 +92,17 @@ function strehl(
 end
 
 """
-    strehl(t, λ, obj::Objective, z_est::Float64, plate::Function, α::Float64; rtol=1e-10, atol=1e-10)
+    strehl(t, λ, obj::Objective, z_est::Real, plate::Function, α::Real; rtol=1e-10, atol=1e-10)
 
 Same as above, but with incidence angle `α` (tilt).
 """
 function strehl(
-    t::Float64,
-    λ::Float64,
+    t::Real,
+    λ::Real,
     obj::Objective,
-    z_est::Float64,
+    z_est::Real,
     plate::Function,
-    α::Float64;
+    α::Real;
     rtol::Float64=1e-10,
     atol::Float64=1e-10
 )::Float64
@@ -116,7 +116,7 @@ end
 # -------------------------------------------------------------------
 
 """
-    maxtol_thick(λ::Float64, obj::Objective; plate=Diamond, t_range=(0.0, 500.0), zrange=[-2.0,4.0], ...)
+    maxtol_thick(λ::Real, obj::Objective; plate=Diamond, t_range=(0.0, 500.0), zrange=[-2.0,4.0], ...)
 
 Find thickness `t` in `t_range` that yields a Strehl ratio near 0.8.  
 No tilt is assumed.  
@@ -128,11 +128,11 @@ and minimize with a 1D search.
 Returns the thickness that best satisfies `S ≈ 0.8`.
 """
 function maxtol_thick(
-    λ::Float64, 
+    λ::Real, 
     obj::Objective,
     plate::Function=Diamond; 
     t_range::Tuple{Real,Real}=(0.0, 500.), 
-    zrange::Vector{Float64}=[-2.0, 4.0], 
+    zrange::AbstractVector{<:Real}=[-2.0, 4.0], 
     rtol::Float64=1e-10, 
     atol::Float64=1e-10
 )
@@ -147,7 +147,7 @@ function maxtol_thick(
 end
 
 """
-    maxtol_thick(λ::Float64, obj::Objective, plate::Function, α::Float64; t_range=(0.0, 500.0), zrange=[-2.0,4.0], ...)
+    maxtol_thick(λ::Real, obj::Objective, plate::Function, α::Real; t_range=(0.0, 500.0), zrange=[-2.0,4.0], ...)
 
 Same as above, but for tilted incidence angle `α`.  
 ```
@@ -155,12 +155,12 @@ cost(t) = (strehl(t, λ, obj, plate, α; zrange=zrange) - 0.8)^2
 ```
 """
 function maxtol_thick(
-    λ::Float64, 
+    λ::Real, 
     obj::Objective,
     plate::Function,
-    α::Float64; 
+    α::Real; 
     t_range::Tuple{Real,Real}=(0.0, 500.), 
-    zrange::Vector{Float64}=[-2.0, 4.0], 
+    zrange::AbstractVector{<:Real}=[-2.0, 4.0], 
     rtol::Float64=1e-10, 
     atol::Float64=1e-10
 )

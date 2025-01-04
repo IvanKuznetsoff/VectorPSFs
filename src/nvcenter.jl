@@ -7,8 +7,8 @@
 
 A struct for storing an NV emission spectrum, specifying:
 
-- `λs::Vector{Float64}`: the sampling wavelengths in micrometers (µm)
-- `weight::Vector{Float64}`: weighting (normalized spectral intensity)
+- `λs::AbstractVector{<:Real}`: the sampling wavelengths in micrometers (µm)
+- `weight::AbstractVector{<:Real}`: weighting (normalized spectral intensity)
 
 Example usage:
 ```julia
@@ -20,8 +20,8 @@ center2 = NVCenter(0.5:0.01:0.7)
 ```
 """
 struct NVCenter
-    λs::Vector{Float64}      # sampling wavelengths (µm)
-    weight::Vector{Float64}  # weighting on spectral intensity
+    λs::AbstractVector{<:Real}      # sampling wavelengths (µm)
+    weight::AbstractVector{<:Real}  # weighting on spectral intensity
 end
 
 """
@@ -36,13 +36,13 @@ function NVCenter(λs::Real, weight::Real)
 end
 
 """
-    NVCenter(λs::Vector{Float64})
+    NVCenter(λs::AbstractVector{<:Real})
 
 Constructor that uses the global NV spectrum spline (`nv_spectrum_spline`) 
 to obtain weights for the given array of wavelengths `λs`.
 Weights are normalized (so their sum is 1).
 """
-function NVCenter(λs::Vector{Float64})
+function NVCenter(λs::AbstractVector{<:Real})
     w = SmoothingSplines.predict(NVspectrum.nv_spectrum_spline, λs)
     weight = w ./ sum(w)
     return NVCenter(λs, weight)
