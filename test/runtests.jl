@@ -25,12 +25,20 @@ import PSFModels as M
     @test round(maxtol_thick(0.7, MPlanApo100x(), Diamond, 0.0)) ≈ 41
     # @test round(maxtol_thick(0.7, MPlanApo100x(), Diamond, asin(100/2000))) ≈ 31
 
+    nv = NVCenter([0.7])
+
     nv = NVCenter([0.7], [1.])
     obj = M10x()
+
+    ys = [PSF(x, 0, 0, obj, nv; atol = 1e-6, rtol = 1e-5) for x in xs] ./ PSF(0, 0, 0, obj, nv; atol = 1e-6, rtol = 1e-5) 
+    @test sqrt(mean(@. abs2(ys .- model.(xs, 0)))) < 5e-4
     
-    plate_list = [Diamond(0.0), FusedSilica(0.0), BorosilicateCrown(0.0), Sapphire(0.0), MagnesiumFluoride(0.0), CustomPlate(0.0, [1.040, 0.230, 1.010], [0.006, 0.020, 103.560])]
+    ys = [PSF(x, 0, 0, obj, nv, Diamond(0.0); atol = 1e-6, rtol = 1e-5) for x in xs] ./ PSF(0, 0, 0, obj, nv, Diamond(0.0); atol = 1e-6, rtol = 1e-5) 
+    @test sqrt(mean(@. abs2(ys .- model.(xs, 0)))) < 5e-4
+    
+    plate_list = [FusedSilica(0.0), BorosilicateCrown(0.0), Sapphire(0.0), MagnesiumFluoride(0.0), CustomPlate(0.0, [1.040, 0.230, 1.010], [0.006, 0.020, 103.560])]
     obj_list = [MPlanApo100x(), LMPLFLN100XBD(), MPlanApo50x(), M10x(), UPLXAPO100X()]
-    
+
     for plate in plate_list
         ys = [PSF(x, 0, 0, obj, nv, plate, 0.0; atol = 1e-6, rtol = 1e-5) for x in xs] ./ PSF(0, 0, 0, obj, nv, Diamond(0.0), 0.0; atol = 1e-6, rtol = 1e-5) 
         @test sqrt(mean(@. abs2(ys .- model.(xs, 0)))) < 5e-4
