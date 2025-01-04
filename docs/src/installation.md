@@ -18,6 +18,6 @@ Once installed, you can `using VectorPsfs` in your Julia session:
 using VectorPsfs
 ```
 
-Check your environment’s compatibility with **Julia ≥ 1.6** (recommended 1.10 or above).
+Check your environment’s compatibility with **Julia ≥ 1.10**.
 ```
 
